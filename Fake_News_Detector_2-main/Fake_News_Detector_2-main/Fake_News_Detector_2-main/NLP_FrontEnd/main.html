@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fake News Detector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Lato', sans-serif;
+      text-decoration: none;
+    }
+    body {
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+    .navbar {
+      background: #161b22;
+      padding: 15px 32px;
+      box-shadow: 0 2px 10px rgb(0 0 0 / 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo a {
+      font-weight: 700;
+      font-size: 2rem;
+      color: #58a6ff;
+      cursor: pointer;
+    }
+    .logo a span {
+      transition: transform 0.3s ease;
+    }
+    .logo a:hover span {
+      transform: translateY(-5px);
+    }
+    ul {
+      list-style: none;
+      display: flex;
+      align-items: center;
+    }
+    ul li {
+      margin-left: 30px;
+    }
+    ul li a, ul li span.logout-link {
+      color: #8b949e;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    ul li a:hover, ul li span.logout-link:hover {
+      color: #58a6ff;
+    }
+    #welcomeUser {
+      color: #c9d1d9;
+      font-weight: 600;
+    }
+    .text-container {
+      max-width: 800px;
+      margin: 64px auto;
+      padding: 24px 32px;
+      background-color: #161b22;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px 0 rgb(88 106 255 / 0.15);
+    }
+    textarea {
+      width: 100%;
+      height: 220px;
+      padding: 16px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      border: 1.5px solid #30363d;
+      background-color: #0d1117;
+      color: #c9d1d9;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    textarea::placeholder {
+      color: #8b949e;
+    }
+    textarea:focus {
+      border-color: #58a6ff;
+      box-shadow: 0 0 12px rgb(88 106 255 / 0.5);
+    }
+    .check-button {
+      margin-top: 20px;
+      background-color: #58a6ff;
+      border: none;
+      padding: 14px 28px;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgb(88 106 255 / 0.5);
+      transition: background-color 0.25s ease, transform 0.2s ease;
+    }
+    .check-button:hover:not(:disabled) {
+      background-color: #3a75f7;
+      box-shadow: 0 8px 20px rgb(58 117 247 / 0.75);
+      transform: translateY(-3px);
+    }
+    .check-button:disabled {
+      background-color: #2f3640;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 28px;
+      font-weight: 700;
+      font-size: 1.25rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      text-align: center;
+    }
+    .real {
+      color: #22c55e;
+    }
+    .fake {
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="logo">
+      <a href="index.html" aria-label="Fake News Detector Logo">
+        <span style="--i:1">F</span><span style="--i:2">A</span><span style="--i:3">K</span><span style="--i:4">E</span><span style="--i:5"> </span>
+        <span style="--i:6">N</span><span style="--i:7">E</span><span style="--i:8">W</span><span style="--i:9">S</span><span style="--i:10"> </span>
+        <span style="--i:11">D</span><span style="--i:12">E</span><span style="--i:13">T</span><span style="--i:14">E</span><span style="--i:15">C</span><span style="--i:16">T</span><span style="--i:17">O</span><span style="--i:18">R</span>
+      </a>
+    </div>
+    <ul>
+      <li><a href="index.html" tabindex="0">Home</a></li>
+      <li><a href="about.html" tabindex="0">About</a></li>
+      <li><span id="welcomeUser">👋 User</span></li>
+      <li><span class="logout-link" role="button" tabindex="0" onclick="logout()" onkeydown="event.key==='Enter' && logout()">Logout</span></li>
+    </ul>
+  </nav>
+
+  <main class="text-container" role="main" aria-label="Fake news input and verification">
+    <textarea id="newsText" placeholder="Paste or type the news article here..." aria-label="News article input"></textarea>
+    <button class="check-button" onclick="checkNews()" aria-label="Check news authenticity">Check News</button>
+    <div id="result" aria-live="polite"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script>
+    const BACKEND_URL = "http://localhost:8000";
+
+    async function checkNews() {
+      const text = document.getElementById("newsText").value.trim();
+      const result = document.getElementById("result");
+
+      if (!text) {
+        result.textContent = "⚠️ Please enter a news article.";
+        result.className = "";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/predict`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          let className = "";
+          if (/FAKE/i.test(data.response)) className = "fake";
+          else if (/REAL/i.test(data.response)) className = "real";
+          result.textContent = data.response;
+          result.className = className;
+        } else {
+          result.textContent = "❌ Error: " + (data.detail || "Unknown error");
+          result.className = "";
+        }
+      } catch (err) {
+        result.textContent = "❌ Server Error: " + err.message;
+        result.className = "";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("userName");
+      localStorage.removeItem("isLoggedIn");
+      Toastify({
+        text: "Logged out successfully!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#ef4444",
+      }).showToast();
+      location.reload();
+    }
+
+    window.onload = () => {
+      const name = localStorage.getItem("userName") || "User";
+      const loggedIn = localStorage.getItem("isLoggedIn");
+      if (!loggedIn) {
+        alert("Please login first.");
+        window.location.href = "login.html"; // Adapt as needed
+      } else {
+        document.getElementById("welcomeUser").textContent = "👋 " + name;
+      }
+    };
+  </script>
+</body>
+</html>

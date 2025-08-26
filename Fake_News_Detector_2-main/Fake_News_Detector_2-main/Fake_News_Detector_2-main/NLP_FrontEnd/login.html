@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login / Signup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Lato', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: linear-gradient(135deg, #0d1117, #161b22);
+      color: #c9d1d9;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    #tsparticles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      background: #0d1117;
+      width: 400px;
+      padding: 30px 35px;
+      border-radius: 15px;
+      box-shadow: 0 4px 14px rgb(0 0 0 / 0.5),
+                  inset 0 0 30px rgb(255 255 255 / 0.05);
+    }
+
+    .tab-buttons {
+      display: flex;
+      margin-bottom: 25px;
+    }
+
+    .tab-buttons button {
+      flex: 1;
+      padding: 12px 0;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: #8b949e;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab-buttons button.active {
+      color: #58a6ff;
+      border-bottom-color: #58a6ff;
+    }
+
+    .tab-buttons button:hover:not(.active) {
+      color: #c9d1d9;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #8b949e;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #30363d;
+      border-radius: 8px;
+      background-color: #161b22;
+      color: #c9d1d9;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #58a6ff;
+      box-shadow: 0 0 6px #58a6ffaa;
+    }
+
+    .submit-btn {
+      background-color: #238636;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background-color: #2ea043;
+      box-shadow: 0 0 15px #2ea043bb;
+    }
+
+    .submit-btn:disabled {
+      background-color: #444c56;
+      cursor: not-allowed;
+    }
+
+    .form {
+      display: none;
+    }
+
+    .form.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="tsparticles"></div>
+
+  <div class="container" role="main" aria-label="Authentication Forms">
+    <div class="tab-buttons" role="tablist">
+      <button id="loginTab" class="active" onclick="showTab('login')" role="tab" aria-selected="true" aria-controls="loginForm">Sign In</button>
+      <button id="signupTab" onclick="showTab('signup')" role="tab" aria-selected="false" aria-controls="signupForm">Sign Up</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="form active" onsubmit="return login(event)" aria-labelledby="loginTab">
+      <div class="form-group">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required minlength="6" autocomplete="current-password" />
+      </div>
+      <button type="submit" class="submit-btn" id="loginBtn">Sign In</button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="signupForm" class="form" onsubmit="return signup(event)" aria-labelledby="signupTab">
+      <div class="form-group">
+        <label for="signupName">Full Name</label>
+        <input type="text" id="signupName" required autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label for="signupEmail">Email</label>
+        <input type="email" id="signupEmail" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="signupPassword">Password</label>
+        <input type="password" id="signupPassword" required minlength="6" autocomplete="new-password" />
+      </div>
+      <button type="submit" class="submit-btn" id="signupBtn">Sign Up</button>
+    </form>
+  </div>
+
+  <!-- Toastify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <!-- tsparticles JS -->
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles/tsparticles.bundle.min.js"></script>
+
+  <script>
+    tsParticles.load("tsparticles", {
+      fpsLimit: 60,
+      background: { color: "#0d1117" },
+      particles: {
+        number: { value: 80, density: { enable: true, area: 900 } },
+        color: { value: "#58a6ff" },
+        shape: { type: ["circle", "triangle", "edge"] },
+        opacity: {
+          value: 0.25,
+          random: { enable: true, minimumValue: 0.1 },
+          anim: { enable: true, speed: 0.8, opacity_min: 0.1, sync: false }
+        },
+        size: {
+          value: 4,
+          random: { enable: true, minimumValue: 1 },
+          anim: { enable: true, speed: 6, size_min: 0.3, sync: false }
+        },
+        links: {
+          enable: true,
+          distance: 140,
+          color: "#58a6ff",
+          opacity: 0.15,
+          width: 1.5,
+        },
+        move: {
+          enable: true,
+          speed: 0.6,
+          direction: "none",
+          random: true,
+          straight: false,
+          outModes: "out"
+        }
+      },
+      interactivity: {
+        events: {
+          onHover: { enable: true, mode: "grab" },
+          onClick: { enable: true, mode: "push" },
+          resize: true,
+        },
+        modes: {
+          grab: { distance: 160, links: { opacity: 0.4 } },
+          push: { quantity: 4 },
+        },
+      },
+      detectRetina: true
+    });
+
+    function showTab(tab) {
+      const loginTab = document.getElementById("loginTab");
+      const signupTab = document.getElementById("signupTab");
+      const loginForm = document.getElementById("loginForm");
+      const signupForm = document.getElementById("signupForm");
+
+      if (tab === "login") {
+        loginTab.classList.add("active");
+        loginTab.setAttribute("aria-selected", "true");
+        signupTab.classList.remove("active");
+        signupTab.setAttribute("aria-selected", "false");
+        loginForm.classList.add("active");
+        signupForm.classList.remove("active");
+      } else {
+        signupTab.classList.add("active");
+        signupTab.setAttribute("aria-selected", "true");
+        loginTab.classList.remove("active");
+        loginTab.setAttribute("aria-selected", "false");
+        signupForm.classList.add("active");
+        loginForm.classList.remove("active");
+      }
+    }
+
+    function showToast(message, type = "default") {
+      Toastify({
+        text: message,
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        backgroundColor:
+          type === "success" ? "#22c55e" :
+          type === "error" ? "#ef4444" : "#238636",
+        stopOnFocus: true,
+      }).showToast();
+    }
+
+    async function login(event) {
+      event.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      const loginBtn = document.getElementById("loginBtn");
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Logging in...";
+
+      try {
+        const res = await fetch("http://localhost:8000/login", {
+          method: "POST",
+          body: new URLSearchParams({ email, password }),
+        });
+
+        if (res.ok) {
+          localStorage.setItem("isLoggedIn", "true");
+          window.location.href = "hello.html";
+        } else {
+          const data = await res.json();
+          showToast("Login failed: " + data.detail, "error");
+        }
+      } catch (err) {
+        showToast("Server error. Please try again later.", "error");
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Sign In";
+      }
+    }
+
+    async function signup(event) {
+      event.preventDefault();
+      const name = document.getElementById("signupName").value;
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+      const signupBtn = document.getElementById("signupBtn");
+
+      signupBtn.disabled = true;
+      signupBtn.textContent = "Signing up...";
+
+      try {
+        const res = await fetch("http://localhost:8000/signup", {
+          method: "POST",
+          body: new URLSearchParams({ name, email, password }),
+        });
+
+        if (res.ok) {
+          localStorage.setItem("isLoggedIn", "true");
+          showToast("Signup successful! Redirecting...", "success");
+          setTimeout(() => {
+            window.location.href = "hello.html";
+          }, 1000);
+        } else {
+          const data = await res.json();
+          showToast("Signup failed: " + data.detail, "error");
+        }
+      } catch (err) {
+        showToast("Server error. Please try again later.", "error");
+      } finally {
+        signupBtn.disabled = false;
+        signupBtn.textContent = "Sign Up";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const mode = new URLSearchParams(window.location.search).get("mode");
+      if (mode === "signup") showTab("signup");
+      else if (mode === "signin") showTab("login");
+    });
+  </script>
+</body>
+</html>
